@@ -5,34 +5,60 @@ from keras.models import load_model
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
-# Load CNN model
+# -------------------- LOAD EMOTION MODEL --------------------
 emotion_model = load_model("emotion_model.hdf5")
 
 emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Sad', 'Surprise', 'Neutral']
 
-# Load NLP dataset
+# -------------------- LOAD NLP MODEL --------------------
 data = pd.read_csv("sentiment_data.csv")
 
 vectorizer = TfidfVectorizer()
 X = vectorizer.fit_transform(data["text"])
 y = data["sentiment"]
 
-model = LogisticRegression()
-model.fit(X, y)
+nlp_model = LogisticRegression()
+nlp_model.fit(X, y)
 
-# Face detection
+# -------------------- FUNCTIONS --------------------
+
+def get_sentiment(text):
+    text_vec = vectorizer.transform([text])
+    return nlp_model.predict(text_vec)[0]
+
+def generate_response(face, sentiment):
+    if face == "Happy" and sentiment == "Positive":
+        return "That's awesome! Keep smiling 😊"
+
+    elif face == "Sad":
+        return "I'm here for you. Things will get better ❤️"
+
+    elif face == "Angry":
+        return "Take a deep breath. Stay calm."
+
+    elif sentiment == "Negative":
+        return "I understand. Try to stay positive."
+
+    else:
+        return "Tell me more about it."
+
+# -------------------- FACE DETECTION --------------------
+
 face_cascade = cv2.CascadeClassifier(
     cv2.data.haarcascades + "haarcascade_frontalface_default.xml"
 )
 
 cap = cv2.VideoCapture(0)
 
-print("Press 'q' to capture emotion")
+print("📸 Press 'q' to capture emotion and start chatbot")
 
 face_emotion = "Neutral"
 
 while True:
     ret, frame = cap.read()
+    if not ret:
+        break
+
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     faces = face_cascade.detectMultiScale(gray, 1.3, 5)
@@ -43,7 +69,7 @@ while True:
         roi = roi_gray / 255.0
         roi = np.reshape(roi, (1, 48, 48, 1))
 
-        prediction = emotion_model.predict(roi)
+        prediction = emotion_model.predict(roi, verbose=0)
         face_emotion = emotion_labels[np.argmax(prediction)]
 
         cv2.rectangle(frame, (x,y), (x+w, y+h), (0,255,0), 2)
@@ -58,25 +84,27 @@ while True:
 cap.release()
 cv2.destroyAllWindows()
 
-# Text input
-user_text = input("Enter your message: ")
+# -------------------- CHATBOT LOOP --------------------
 
-text_vec = vectorizer.transform([user_text])
-text_sentiment = model.predict(text_vec)[0]
+print("\n🤖 Chatbot Started (type 'exit' to stop)\n")
 
-# Decision logic
-def decide_response(face, text):
-    if face == "Sad" and text == "Negative":
-        return "You seem upset. Take a break."
-    if face == "Neutral" and text == "Negative":
-        return "You seem stressed. Try relaxing."
-    if face == "Happy" and text == "Positive":
-        return "Great! Keep it up."
-    return "Stay focused and calm."
+chat_history = []
 
-response = decide_response(face_emotion, text_sentiment)
+while True:
+    user_text = input("You: ")
 
-print("\n--- OUTPUT ---")
-print("Face Emotion:", face_emotion)
-print("Text Sentiment:", text_sentiment)
-print("Response:", response)
+    if user_text.lower() == "exit":
+        print("👋 Chat ended.")
+        break
+
+    text_sentiment = get_sentiment(user_text)
+
+    response = generate_response(face_emotion, text_sentiment)
+
+    chat_history.append(("You", user_text))
+    chat_history.append(("Bot", response))
+
+    print("\n--- OUTPUT ---")
+    print("Face Emotion:", face_emotion)
+    print("Text Sentiment:", text_sentiment)
+    print("Bot:", response)
