@@ -25,6 +25,18 @@ An AI system that combines **facial emotion recognition** and **natural language
 4. Analyzes sentiment
 5. Generates a contextual response
 
+## 📸 Demo
+
+### 🎥 Emotion Detection
+<img width="975" height="441" alt="image" src="https://github.com/user-attachments/assets/2cc5b66d-38c7-46cc-8d75-4c6c2c7cf9cd" />
+<img width="975" height="417" alt="image" src="https://github.com/user-attachments/assets/d2d62be6-a209-499e-98d4-9d472516ee4e" />
+
+
+
+### 💬 Chat Interface
+<img width="975" height="475" alt="image" src="https://github.com/user-attachments/assets/f33de683-d0f1-4ed9-aa2a-0bf8bb2c4da2" />
+
+
 ##  Run the Project
 
 ```bash
